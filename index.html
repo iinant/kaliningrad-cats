@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fff6ea">
+<title>А когда я поеду в Калининград?</title>
+<style>
+  :root{
+    --bg:#fff6ea; --card:#ffffff; --ink:#3b2c1e; --muted:#9a8a76;
+    --accent:#ff8a3d; --accent-dark:#e06d1f; --good:#5cb85c; --bad:#e06060;
+    --gold:#ffb340; --shadow:0 6px 20px rgba(80,50,20,.12);
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg fill='%23f0e2cd' opacity='.55'%3E%3Cellipse cx='24' cy='28' rx='7' ry='6'/%3E%3Ccircle cx='15' cy='16' r='3'/%3E%3Ccircle cx='24' cy='12' r='3'/%3E%3Ccircle cx='33' cy='16' r='3'/%3E%3Cellipse cx='90' cy='95' rx='7' ry='6'/%3E%3Ccircle cx='81' cy='83' r='3'/%3E%3Ccircle cx='90' cy='79' r='3'/%3E%3Ccircle cx='99' cy='83' r='3'/%3E%3C/g%3E%3C/svg%3E");
+    color:var(--ink); min-height:100dvh; overscroll-behavior-y:contain;
+  }
+  #app{max-width:480px; margin:0 auto; padding:12px 14px calc(16px + env(safe-area-inset-bottom)); min-height:100dvh; display:flex; flex-direction:column}
+  .screen{display:none; flex:1; flex-direction:column}
+  .screen.active{display:flex}
+  h1{font-size:26px; line-height:1.2; margin:8px 0}
+  .btn{
+    display:block; width:100%; border:0; border-radius:16px; padding:16px;
+    background:var(--accent); color:#fff; font-size:19px; font-weight:700;
+    box-shadow:0 4px 0 var(--accent-dark); cursor:pointer; transition:transform .08s;
+  }
+  .btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--accent-dark)}
+  .btn.secondary{background:#fff; color:var(--accent-dark); box-shadow:0 4px 0 #eadbc4}
+
+  /* ─── стартовый экран ─── */
+  #screen-start{justify-content:center; text-align:center}
+  .start-cat{font-size:64px; line-height:1; animation:bounce 2.4s ease-in-out infinite}
+  @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  .rules{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin:16px 0 20px; text-align:left; font-size:15px}
+  .rules b{color:var(--accent-dark)}
+  .rules li{margin:7px 0}
+  .catpay{display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:10px; font-size:13px}
+  .catpay div{background:#fff7ec; border-radius:10px; padding:6px 4px; text-align:center}
+  .catpay b{display:block; font-size:15px}
+
+  /* ─── игровой экран ─── */
+  .topbar{display:flex; align-items:center; gap:10px; margin-bottom:10px}
+  .round{font-weight:700; font-size:14px; white-space:nowrap}
+  .pbar{flex:1; height:14px; background:#f0e2cd; border-radius:8px; overflow:hidden; position:relative}
+  .pbar-fill{height:100%; background:linear-gradient(90deg,var(--gold),var(--accent)); border-radius:8px; transition:width .4s; width:0}
+  .pbar-fill::after{content:"🐾"; position:absolute; right:-4px; top:-5px; font-size:17px}
+  .scorechip{font-size:14px; font-weight:700; background:#fff; border-radius:12px; padding:3px 9px; box-shadow:var(--shadow); white-space:nowrap}
+
+  .gallery{position:relative; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); background:#eee}
+  .gal-track{display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; aspect-ratio:4/3}
+  .gal-track::-webkit-scrollbar{display:none}
+  .gal-track img{width:100%; flex:0 0 100%; scroll-snap-align:center; object-fit:cover; display:block}
+  .gal-dots{position:absolute; bottom:8px; left:0; right:0; display:flex; justify-content:center; gap:6px}
+  .gal-dots i{width:7px; height:7px; border-radius:50%; background:rgba(255,255,255,.6); transition:background .2s}
+  .gal-dots i.on{background:#fff}
+  .badge{position:absolute; top:10px; left:10px; background:rgba(59,44,30,.75); color:#fff; font-size:12px; padding:4px 9px; border-radius:10px; backdrop-filter:blur(3px)}
+
+  .lot-title{font-size:16px; font-weight:700; margin:12px 2px 2px}
+  .lot-addr{font-size:13px; color:var(--muted); margin:0 2px 6px}
+
+  .q-label{font-size:14px; color:var(--muted); text-align:center; margin-top:4px}
+
+  /* бегунок с котиком */
+  .slider-wrap{position:relative; margin:26px 22px 6px}
+  input[type=range]{-webkit-appearance:none; appearance:none; width:100%; height:10px; border-radius:6px; outline:none;
+    background:linear-gradient(90deg,#ffe3c2,#ffc999);}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; width:52px; height:52px; border-radius:50%;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg stroke='%233b2c1e' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath fill='%23ff9d4d' d='M10 26 L8 8 L22 18 Z'/%3E%3Cpath fill='%23ff9d4d' d='M54 26 L56 8 L42 18 Z'/%3E%3Ccircle cx='32' cy='34' r='22' fill='%23ff9d4d'/%3E%3C/g%3E%3Ccircle cx='24' cy='30' r='3' fill='%233b2c1e'/%3E%3Ccircle cx='40' cy='30' r='3' fill='%233b2c1e'/%3E%3Cpath d='M28 39 q4 4 8 0' fill='none' stroke='%233b2c1e' stroke-width='2.5' stroke-linecap='round'/%3E%3Cellipse cx='32' cy='36' rx='2.4' ry='1.7' fill='%23e2606f'/%3E%3Cg stroke='%233b2c1e' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M12 34 h8 M12 40 l8 -2 M52 34 h-8 M52 40 l-8 -2'/%3E%3C/g%3E%3C/svg%3E") center/78% no-repeat;
+    box-shadow:0 3px 10px rgba(80,50,20,.3); cursor:grab;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:52px; height:52px; border:0; border-radius:50%;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cg stroke='%233b2c1e' stroke-width='2.5' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath fill='%23ff9d4d' d='M10 26 L8 8 L22 18 Z'/%3E%3Cpath fill='%23ff9d4d' d='M54 26 L56 8 L42 18 Z'/%3E%3Ccircle cx='32' cy='34' r='22' fill='%23ff9d4d'/%3E%3C/g%3E%3Ccircle cx='24' cy='30' r='3' fill='%233b2c1e'/%3E%3Ccircle cx='40' cy='30' r='3' fill='%233b2c1e'/%3E%3Cpath d='M28 39 q4 4 8 0' fill='none' stroke='%233b2c1e' stroke-width='2.5' stroke-linecap='round'/%3E%3Cellipse cx='32' cy='36' rx='2.4' ry='1.7' fill='%23e2606f'/%3E%3Cg stroke='%233b2c1e' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M12 34 h8 M12 40 l8 -2 M52 34 h-8 M52 40 l-8 -2'/%3E%3C/g%3E%3C/svg%3E") center/78% no-repeat;
+    box-shadow:0 3px 10px rgba(80,50,20,.3);
+  }
+  .bubble{
+    position:absolute; bottom:64px; left:50%; transform:translateX(-50%);
+    background:var(--ink); color:#fff; font-weight:700; font-size:17px;
+    padding:6px 14px; border-radius:12px; white-space:nowrap; pointer-events:none;
+  }
+  .bubble::after{content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%);
+    border:7px solid transparent; border-top-color:var(--ink)}
+  .scale{display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin:8px 2px 0}
+  #btn-ok{margin-top:14px}
+
+  /* результат раунда */
+  .reveal{background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px; margin-top:12px; text-align:center; animation:pop .3s}
+  @keyframes pop{from{transform:scale(.92); opacity:0}to{transform:scale(1); opacity:1}}
+  .reveal .real{font-size:13px; color:var(--muted)}
+  .reveal .real b{font-size:24px; color:var(--ink); display:block}
+  .diff{font-size:16px; font-weight:700; margin:8px 0 2px}
+  .diff.over{color:var(--bad)} .diff.under{color:#2f9e6e}
+  .cats-earned{font-size:30px; font-weight:800; color:var(--accent-dark); margin:6px 0 2px}
+  .cats-earned small{font-size:14px; color:var(--muted); font-weight:600}
+  .verdict-line{font-size:14px; color:var(--muted)}
+
+  /* ─── итоговый экран ─── */
+  #screen-result{justify-content:center; text-align:center}
+  .final-cat{font-size:58px; line-height:1}
+  .sign{
+    position:relative; background:#fff; border:3px solid var(--accent); border-radius:16px;
+    padding:14px 20px 16px; margin:14px auto 0; width:max-content; box-shadow:var(--shadow);
+  }
+  .sign .num{font-size:44px; font-weight:800; color:var(--accent-dark); line-height:1}
+  .sign .of{font-size:14px; color:var(--muted); font-weight:600}
+  .paws{font-size:24px; letter-spacing:18px; margin-top:-10px; padding-left:18px}
+  .final-title{font-size:22px; font-weight:800; margin:14px 0 6px}
+  .final-text{font-size:15px; color:var(--muted); margin:0 8px 12px}
+  .money-line{font-size:14px; font-weight:700; background:#fff; border-radius:12px; padding:10px 12px; box-shadow:var(--shadow); margin:0 4px 16px}
+  details.rounds{background:#fff; border-radius:14px; box-shadow:var(--shadow); margin:0 4px 16px; text-align:left; font-size:14px}
+  details.rounds summary{padding:12px 14px; font-weight:700; cursor:pointer; color:var(--accent-dark)}
+  details.rounds table{width:100%; border-collapse:collapse; padding:0 10px 10px}
+  details.rounds td{padding:6px 10px; border-top:1px solid #f4e9d8}
+  details.rounds td:last-child{text-align:right; white-space:nowrap}
+
+  .fade{animation:fadein .35s}
+  @keyframes fadein{from{opacity:0; transform:translateY(10px)}to{opacity:1; transform:none}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- СТАРТОВЫЙ ЭКРАН -->
+  <section id="screen-start" class="screen active">
+    <div class="start-cat">😻🐾</div>
+    <h1>А когда я поеду<br>в Калининград?</h1>
+    <div class="rules">
+      <ol>
+        <li>Смотри фото квартиры и двигай <b>котика-бегунок</b>: сколько ₽ за ночь ты бы заплатил?</li>
+        <li>Жми <b>«Устраивает»</b> — узнаешь реальную цену и получишь баллы-котики 🐾</li>
+        <li>В раунде <b>10 лотов</b> из реальных объявлений Калининграда</li>
+      </ol>
+      <div class="catpay">
+        <div><b>😻 5</b>±5%</div>
+        <div><b>😺 4</b>±10%</div>
+        <div><b>🐱 3</b>±20%</div>
+        <div><b>🙀 2</b>±35%</div>
+        <div><b>😿 1</b>±50%</div>
+        <div><b>🥲 0</b>дальше</div>
+      </div>
+    </div>
+    <button class="btn" id="btn-play">Играть 🐾</button>
+  </section>
+
+  <!-- ИГРОВОЙ ЭКРАН -->
+  <section id="screen-game" class="screen">
+    <div class="topbar">
+      <span class="round" id="round-label">Лот 1/10</span>
+      <div class="pbar"><div class="pbar-fill" id="pbar-fill"></div></div>
+      <span class="scorechip" id="score-chip">🐾 0</span>
+    </div>
+    <div class="gallery" id="gallery">
+      <div class="gal-track" id="gal-track"></div>
+      <div class="gal-dots" id="gal-dots"></div>
+    </div>
+    <div class="lot-title" id="lot-title"></div>
+    <div class="lot-addr" id="lot-addr"></div>
+
+    <div id="guess-zone">
+      <div class="q-label">Сколько ₽ за ночь ты бы заплатил?</div>
+      <div class="slider-wrap">
+        <div class="bubble" id="bubble">3 000 ₽</div>
+        <input type="range" id="slider" min="1500" max="6000" step="50" value="3000">
+      </div>
+      <div class="scale"><span>1 500 ₽</span><span>6 000 ₽</span></div>
+      <button class="btn" id="btn-ok">Устраивает 🐱</button>
+    </div>
+
+    <div id="reveal-zone" style="display:none"></div>
+  </section>
+
+  <!-- ИТОГОВЫЙ ЭКРАН -->
+  <section id="screen-result" class="screen">
+    <div class="final-cat" id="final-cat">😸</div>
+    <div class="sign">
+      <div class="num" id="final-num">0</div>
+      <div class="of">котиков из 50</div>
+      <div class="paws">🐾🐾</div>
+    </div>
+    <div class="final-title" id="final-title"></div>
+    <p class="final-text" id="final-text"></p>
+    <div class="money-line" id="money-line"></div>
+    <details class="rounds">
+      <summary>Все 10 лотов 🔍</summary>
+      <table id="rounds-table"></table>
+    </details>
+    <button class="btn" id="btn-again">Играть ещё 🐾</button>
+  </section>
+</div>
+
+<script src="data.js"></script>
+<script>
+(function(){
+  "use strict";
+  var fmt = function(n){ return n.toLocaleString("ru-RU"); };
+  var SLIDER_MIN = 1500, SLIDER_MAX = 6000;
+
+  // ── правила начисления котиков: % отклонения → баллы ──
+  function catsFor(diffPct){
+    var a = Math.abs(diffPct);
+    if (a <= 5)  return 5;
+    if (a <= 10) return 4;
+    if (a <= 20) return 3;
+    if (a <= 35) return 2;
+    if (a <= 50) return 1;
+    return 0;
+  }
+  var CAT_EMOJI = ["🥲","😿","🙀","🐱","😺","😻"];
+  var PRAISE = [
+    "Даже котики в шоке 🙀",
+    "Мимо кассы, как кот мимо миски",
+    "Хм, хозяин, ты уверен?",
+    "Уже тепло, котик доволен",
+    "Почти в точку! Мур-р",
+    "Прямо в кошачье яблочко! 😻"
+  ];
+
+  var DATA = (window.GAME_DATA || []).filter(function(l){ return l.price >= SLIDER_MIN && l.price <= SLIDER_MAX; });
+  var state = { lots:[], i:0, score:0, answers:[] };
+
+  var $ = function(id){ return document.getElementById(id); };
+  function show(name){
+    ["screen-start","screen-game","screen-result"].forEach(function(s){
+      $(s).classList.toggle("active", s === name);
+    });
+  }
+
+  // ── галерея: скролл-снап + точки ──
+  function buildGallery(lot){
+    var track = $("gal-track"), dots = $("gal-dots");
+    track.innerHTML = ""; dots.innerHTML = "";
+    lot.images.forEach(function(src, idx){
+      var img = document.createElement("img");
+      img.src = src; img.alt = lot.title;
+      img.loading = idx === 0 ? "eager" : "lazy";
+      img.decoding = "async";
+      img.referrerPolicy = "no-referrer";
+      img.draggable = false;
+      track.appendChild(img);
+      var d = document.createElement("i");
+      dots.appendChild(d);
+    });
+    syncDots();
+    track.onscroll = function(){
+      window.requestAnimationFrame(syncDots);
+    };
+    function syncDots(){
+      var idx = Math.round(track.scrollLeft / track.clientWidth);
+      [].forEach.call(dots.children, function(d, j){ d.className = j === idx ? "on" : ""; });
+    }
+  }
+
+  function showLot(){
+    var lot = state.lots[state.i];
+    $("round-label").textContent = "Лот " + (state.i+1) + "/10";
+    $("pbar-fill").style.width = (state.i * 10) + "%";
+    $("score-chip").textContent = "🐾 " + state.score;
+    $("lot-title").textContent = lot.title;
+    $("lot-addr").textContent = (lot.address || "Калининград") + (lot.rating ? "  ·  ★ " + String(lot.rating).replace(".", ",") : "");
+    buildGallery(lot);
+    $("slider").value = 3000;
+    updateBubble();
+    $("guess-zone").style.display = "";
+    $("reveal-zone").style.display = "none";
+    $("btn-ok").textContent = state.i === 9 ? "Устраивает, финал! 🐾" : "Устраивает 🐱";
+  }
+
+  function updateBubble(){
+    var v = +$("slider").value;
+    var b = $("bubble");
+    b.textContent = fmt(v) + " ₽";
+    var pct = (v - SLIDER_MIN) / (SLIDER_MAX - SLIDER_MIN);
+    b.style.left = (8 + pct * 84) + "%";
+  }
+  $("slider").addEventListener("input", updateBubble);
+
+  // ── нажал «Устраивает» ──
+  $("btn-ok").addEventListener("click", function(){
+    var lot = state.lots[state.i];
+    var guess = +$("slider").value;
+    var real = lot.price;
+    var diff = guess - real;                       // + переплата, − не хватило
+    var diffPct = diff / real * 100;
+    var cats = catsFor(diffPct);
+    state.score += cats;
+    state.answers.push({ lot:lot, guess:guess, real:real, diff:diff, diffPct:diffPct, cats:cats });
+
+    var rz = $("reveal-zone");
+    var diffTxt, diffCls;
+    if (diff > 0){ diffTxt = "Переплата: +" + fmt(diff) + " ₽"; diffCls = "over"; }
+    else if (diff < 0){ diffTxt = "Не хватило бы: −" + fmt(-diff) + " ₽"; diffCls = "under"; }
+    else { diffTxt = "В точку, без разницы!"; diffCls = "under"; }
+
+    rz.innerHTML =
+      '<div class="reveal fade">' +
+        '<div class="real">Реальная цена за ночь<b>' + fmt(real) + ' ₽</b></div>' +
+        '<div class="diff ' + diffCls + '">' + diffTxt + ' <small>(' + (diffPct>0?'+':'') + diffPct.toFixed(0) + '%)</small></div>' +
+        '<div class="cats-earned">+' + cats + ' ' + CAT_EMOJI[cats] + '<small> котиков</small></div>' +
+        '<div class="verdict-line">' + PRAISE[cats] + '</div>' +
+      '</div>' +
+      '<button class="btn" id="btn-next" style="margin-top:12px">' +
+        (state.i === 9 ? "К результатам 🏁" : "Следующий лот 🐾") + '</button>';
+    $("guess-zone").style.display = "none";
+    rz.style.display = "";
+    $("score-chip").textContent = "🐾 " + state.score;
+    $("pbar-fill").style.width = ((state.i+1) * 10) + "%";
+    $("btn-next").addEventListener("click", function(){
+      state.i++;
+      if (state.i < 10) showLot(); else showResult();
+      $("screen-game").scrollTop = 0; window.scrollTo(0,0);
+    });
+  });
+
+  // ── итоговый экран ──
+  function showResult(){
+    var a = state.answers;
+    var total = state.score;
+    var signedSum = a.reduce(function(s,x){ return s + x.diffPct; }, 0) / a.length;
+    var moneySum = a.reduce(function(s,x){ return s + x.diff; }, 0);
+
+    var emoji, title, text;
+    if (signedSum < -10){
+      emoji = "😿"; title = "Воздухан…";
+      text = "Ты всё время называл меньше, чем стоит. Котик грустит: денег на такие квартиры у тебя явно не хватает. Воздух — бесплатно, квартира — нет.";
+    } else if (signedSum > 10){
+      emoji = "🤑"; title = "Очень необычно, зайка!";
+      text = "Ты готов платить больше, чем просят! Богатый котик одобряет: такой щедрый хозяин ему точно подходит. Где твой лимузин?";
+    } else {
+      emoji = "😸"; title = "Хотите верьте, хотите нет";
+      text = "Твои цены почти совпали с реальными. Весёлый котик в восторге: ты чувствуешь рынок Калининграда, как родной лоток!";
+    }
+
+    $("final-cat").textContent = emoji;
+    $("final-num").textContent = total;
+    $("final-title").textContent = title;
+    $("final-text").textContent = text;
+    $("money-line").innerHTML = moneySum > 0
+      ? "💰 Если бы ты забронировал все 10 — переплатил бы <b>" + fmt(moneySum) + " ₽</b>"
+      : moneySum < 0
+      ? "🐱 А если бы брал все 10 — сэкономил бы <b>" + fmt(-moneySum) + " ₽</b>"
+      : "⚖️ Итог: ноль рублей разницы. Котик аплодирует!";
+
+    var rows = a.map(function(x, i){
+      var d = x.diff === 0 ? "в точку" : (x.diff > 0 ? "+" + fmt(x.diff) : "−" + fmt(-x.diff));
+      return "<tr><td>" + (i+1) + ". " + x.lot.title + "</td><td>" + fmt(x.real) + " ₽ → <b>" + d + "</b> " + CAT_EMOJI[x.cats] + "</td></tr>";
+    }).join("");
+    $("rounds-table").innerHTML = rows;
+
+    show("screen-result");
+    window.scrollTo(0,0);
+  }
+
+  // ── старт / рестарт ──
+  function start(){
+    var pool = DATA.slice();
+    for (var i = pool.length - 1; i > 0; i--){
+      var j = Math.floor(Math.random() * (i+1));
+      var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+    }
+    state = { lots: pool.slice(0, 10), i:0, score:0, answers:[] };
+    showLot();
+    show("screen-game");
+    window.scrollTo(0,0);
+  }
+  $("btn-play").addEventListener("click", start);
+  $("btn-again").addEventListener("click", start);
+})();
+</script>
+</body>
+</html>
